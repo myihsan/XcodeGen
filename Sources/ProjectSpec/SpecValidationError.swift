@@ -30,6 +30,8 @@ public struct SpecValidationError: Error, CustomStringConvertible {
         case missingDefaultConfig(configName: String)
         case invalidPerConfigSettings
         case deprecatedUsageOfPlaceholder(placeholderName: String)
+        case invalidBreakpointExtensionID(String)
+        case invalidBreakpointActionExtensionID(String)
 
         public var description: String {
             switch self {
@@ -75,6 +77,10 @@ public struct SpecValidationError: Error, CustomStringConvertible {
                 return "Settings that are for a specific config must go in \"configs\". \"base\" can be used for common settings"
             case let .deprecatedUsageOfPlaceholder(placeholderName: placeholderName):
                 return "Usage of $\(placeholderName) is deprecated and will stop working in an upcoming version. Use ${\(placeholderName)} instead."
+            case let .invalidBreakpointExtensionID(extensionID): 
+                return "Invalid breakpoint extension id \(extensionID)"
+            case let .invalidBreakpointActionExtensionID(extensionID): 
+                return "Invalid breakpoint action extension id \(extensionID)"
             }
         }
     }

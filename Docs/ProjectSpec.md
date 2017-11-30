@@ -6,6 +6,7 @@
 - [Project](#project)
 	- [Include](#include)
 	- [Options](#options)
+	- [Breakpoints](#breakpoints)
 	- [Configs](#configs)
 	- [Setting Groups](#setting-groups)
 - [Settings](#settings)
@@ -40,6 +41,7 @@ You can also use environment variables in your configuration file, by using `${S
 - [ ] **include**:  **[Include](#include)** - One or more paths to other specs
 - [ ] **options**: **[Options](#options)** - Various options to override default behaviour
 - [ ] **attributes**: **[String: Any]** - The PBXProject attributes. This is for advanced use. This defaults to ``{"LastUpgradeCheck": "XcodeVersion"}`` with `xcodeVersion` being set by [Options](#options)`.xcodeVersion`
+- [ ] **breakpoints**: [Breakpoints](#breakpoints) - Add shared breakpoints to the generated project
 - [ ] **configs**: **[Configs](#configs)** - Project build configurations. Defaults to `Debug` and `Release` configs
 - [ ] **configFiles**: **[Config Files](#config-files)** - `.xcconfig` files per config
 - [ ] **settings**: **[Settings](#settings)** - Project specific settings. Default base and config type settings will be applied first before any settings defined here
@@ -128,6 +130,20 @@ options:
   deploymentTarget:
     watchOS: "2.0"
     tvOS: "10.0"
+```
+
+### Breakpoints
+
+```yaml
+breakpoints:
+  - extensionID: exception
+    enabled: true
+    ignoreCount: 0
+    continueAfterRunningActions: false
+    actions:
+      - extensionID: sound
+        soundName: Blow
+        
 ```
 
 ### Configs
