@@ -7,6 +7,8 @@ public enum SpecParsingError: Error, CustomStringConvertible {
     case unknownPackageRequirement([String: Any])
     case invalidSourceBuildPhase(String)
     case invalidVersion(String)
+    case unknownBreakpointType(String)
+    case unknownBreakpointActionType(String)
 
     public var description: String {
         switch self {
@@ -22,6 +24,10 @@ public enum SpecParsingError: Error, CustomStringConvertible {
             return "Invalid version: \(version)"
         case let .unknownPackageRequirement(package):
             return "Unknown package requirement: \(package)"
+        case let .unknownBreakpointType(breakpoint):
+            return "Unknown Breakpoint type: \(breakpoint)"
+        case let .unknownBreakpointActionType(breakpoint):
+            return "Unknown Breakpoint Action type: \(breakpoint)"
         }
     }
 }

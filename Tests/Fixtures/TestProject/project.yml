@@ -16,7 +16,10 @@ fileGroups:
 configFiles:
   Test Debug: Configs/config.xcconfig
 breakpoints:
-  - extensionID: exception
+  - type: ExceptionBreakpoint
+    actions:
+      - type: Sound
+        soundName: Blow
 targets:
   Legacy:
     type: ""

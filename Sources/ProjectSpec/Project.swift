@@ -169,7 +169,11 @@ extension Project {
         targets = try jsonDictionary.json(atKeyPath: "targets").sorted { $0.name < $1.name }
         aggregateTargets = try jsonDictionary.json(atKeyPath: "aggregateTargets").sorted { $0.name < $1.name }
         schemes = try jsonDictionary.json(atKeyPath: "schemes")
-        breakpoints = jsonDictionary.json(atKeyPath: "breakpoints") ?? []
+        if jsonDictionary["breakpoints"] != nil {
+            breakpoints = try jsonDictionary.json(atKeyPath: "breakpoints", invalidItemBehaviour: .fail)
+        } else {
+            breakpoints = []
+        }
         fileGroups = jsonDictionary.json(atKeyPath: "fileGroups") ?? []
         configFiles = jsonDictionary.json(atKeyPath: "configFiles") ?? [:]
         attributes = jsonDictionary.json(atKeyPath: "attributes") ?? [:]
