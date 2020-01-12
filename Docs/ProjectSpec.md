@@ -135,7 +135,7 @@ options:
 ### Breakpoints
 
 - [x] **type**: **String** - Breakpoint type
-    - `FileBreakpoint`: file brakpoint
+    - `FileBreakpoint`: file breakpoint
     - `ExceptionBreakpoint`: exception breakpoint
     - `SwiftErrorBreakpoint`: swift error breakpoint
     - `OpenGLErrorBreakpoint`: OpenGL breakpoint
