@@ -3,7 +3,7 @@
 ## Next Version
 
 #### Added
-- Add shared breakpoints support [#693](https://github.com/yonaskolb/XcodeGen/pull/693) @myihsan
+- Add shared breakpoints support [#693](https://github.com/yonaskolb/XcodeGen/pull/693) @alexruperez @myihsan
 
 #### Fixed
 - Add base localisation by default even if no base localised files were found. Fixes warning in Xcode 11 [#685](https://github.com/yonaskolb/XcodeGen/pull/685) @yonaskolb
