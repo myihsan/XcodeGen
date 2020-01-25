@@ -11,6 +11,7 @@ public enum SpecParsingError: Error, CustomStringConvertible {
     case unknownBreakpointScope(String)
     case unknownBreakpointStopOnStyle(String)
     case unknownBreakpointActionType(String)
+    case unknownBreakpointActionConveyanceType(String)
 
     public var description: String {
         switch self {
@@ -34,6 +35,8 @@ public enum SpecParsingError: Error, CustomStringConvertible {
             return "Unknown Breakpoint stopOnStyle: \(stopOnStyle)"
         case let .unknownBreakpointActionType(type):
             return "Unknown Breakpoint Action type: \(type)"
+        case let .unknownBreakpointActionConveyanceType(type):
+            return "Unknown Breakpoint Action conveyance type: \(type)"
         }
     }
 }
