@@ -1,6 +1,7 @@
 import Foundation
 import JSONUtilities
 import XcodeProj
+import Version
 
 public struct LegacyTarget: Equatable {
     public static let passSettingsDefault = false
@@ -47,7 +48,7 @@ public struct Target: ProjectTarget {
     public var productName: String
 
     public var isLegacy: Bool {
-        return legacy != nil
+        legacy != nil
     }
 
     public var filename: String {
@@ -108,14 +109,14 @@ public struct Target: ProjectTarget {
 extension Target: CustomStringConvertible {
 
     public var description: String {
-        return "\(name): \(platform.rawValue) \(type)"
+        "\(name): \(platform.rawValue) \(type)"
     }
 }
 
 extension Target: PathContainer {
 
     static var pathProperties: [PathProperty] {
-        return [
+        [
             .dictionary([
                 .string("sources"),
                 .object("sources", TargetSource.pathProperties),
@@ -148,8 +149,7 @@ extension Target {
                 for platform in platforms {
                     var platformTarget = target
 
-                    platformTarget = platformTarget.replaceString("$platform", with: platform) // Will be removed in upcoming version
-                    platformTarget = platformTarget.replaceString("${platform}", with: platform)
+                    platformTarget = platformTarget.expand(variables: ["platform": platform])
 
                     platformTarget["platform"] = platform
                     let platformSuffix = platformTarget["platformSuffix"] as? String ?? "_\(platform)"
@@ -189,7 +189,7 @@ extension Target {
 extension Target: Equatable {
 
     public static func == (lhs: Target, rhs: Target) -> Bool {
-        return lhs.name == rhs.name &&
+        lhs.name == rhs.name &&
             lhs.type == rhs.type &&
             lhs.platform == rhs.platform &&
             lhs.deploymentTarget == rhs.deploymentTarget &&
@@ -258,9 +258,9 @@ extension Target: NamedJSONDictionaryConvertible {
         }
 
         if let string: String = jsonDictionary.json(atKeyPath: "deploymentTarget") {
-            deploymentTarget = try Version(string)
+            deploymentTarget = try Version.parse(string)
         } else if let double: Double = jsonDictionary.json(atKeyPath: "deploymentTarget") {
-            deploymentTarget = try Version(double)
+            deploymentTarget = try Version.parse(String(double))
         } else {
             deploymentTarget = nil
         }

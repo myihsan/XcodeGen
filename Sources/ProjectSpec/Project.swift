@@ -32,9 +32,15 @@ public struct Project: BuildSettingsContainer {
     public var fileGroups: [String]
     public var configFiles: [String: String]
     public var include: [String] = []
+    public var projectReferences: [ProjectReference] = [] {
+        didSet {
+            projectReferencesMap = Dictionary(uniqueKeysWithValues: projectReferences.map { ($0.name, $0) })
+        }
+    }
 
     private var targetsMap: [String: Target]
     private var aggregateTargetsMap: [String: AggregateTarget]
+    private var projectReferencesMap: [String: ProjectReference]
 
     public init(
         basePath: Path = "",
@@ -51,7 +57,8 @@ public struct Project: BuildSettingsContainer {
         options: SpecOptions = SpecOptions(),
         fileGroups: [String] = [],
         configFiles: [String: String] = [:],
-        attributes: [String: Any] = [:]
+        attributes: [String: Any] = [:],
+        projectReferences: [ProjectReference] = []
     ) {
         self.basePath = basePath
         self.name = name
@@ -70,26 +77,32 @@ public struct Project: BuildSettingsContainer {
         self.fileGroups = fileGroups
         self.configFiles = configFiles
         self.attributes = attributes
+        self.projectReferences = projectReferences
+        projectReferencesMap = Dictionary(uniqueKeysWithValues: self.projectReferences.map { ($0.name, $0) })
+    }
+
+    public func getProjectReference(_ projectName: String) -> ProjectReference? {
+        projectReferencesMap[projectName]
     }
 
     public func getTarget(_ targetName: String) -> Target? {
-        return targetsMap[targetName]
+        targetsMap[targetName]
     }
 
     public func getAggregateTarget(_ targetName: String) -> AggregateTarget? {
-        return aggregateTargetsMap[targetName]
+        aggregateTargetsMap[targetName]
     }
 
     public func getProjectTarget(_ targetName: String) -> ProjectTarget? {
-        return targetsMap[targetName] ?? aggregateTargetsMap[targetName]
+        targetsMap[targetName] ?? aggregateTargetsMap[targetName]
     }
 
     public func getConfig(_ configName: String) -> Config? {
-        return configs.first { $0.name == configName }
+        configs.first { $0.name == configName }
     }
 
     public var defaultProjectPath: Path {
-        return basePath + "\(name).xcodeproj"
+        basePath + "\(name).xcodeproj"
     }
 }
 
@@ -126,7 +139,7 @@ extension Project: CustomDebugStringConvertible {
 extension Project: Equatable {
 
     public static func == (lhs: Project, rhs: Project) -> Bool {
-        return lhs.name == rhs.name &&
+        lhs.name == rhs.name &&
             lhs.targets == rhs.targets &&
             lhs.aggregateTargets == rhs.aggregateTargets &&
             lhs.settings == rhs.settings &&
@@ -168,6 +181,7 @@ extension Project {
             configs.map { Config(name: $0, type: ConfigType(rawValue: $1)) }.sorted { $0.name < $1.name }
         targets = try jsonDictionary.json(atKeyPath: "targets").sorted { $0.name < $1.name }
         aggregateTargets = try jsonDictionary.json(atKeyPath: "aggregateTargets").sorted { $0.name < $1.name }
+        projectReferences = try jsonDictionary.json(atKeyPath: "projectReferences").sorted { $0.name < $1.name }
         schemes = try jsonDictionary.json(atKeyPath: "schemes")
         if jsonDictionary["breakpoints"] != nil {
             breakpoints = try jsonDictionary.json(atKeyPath: "breakpoints", invalidItemBehaviour: .fail)
@@ -191,6 +205,7 @@ extension Project {
         }
         targetsMap = Dictionary(uniqueKeysWithValues: targets.map { ($0.name, $0) })
         aggregateTargetsMap = Dictionary(uniqueKeysWithValues: aggregateTargets.map { ($0.name, $0) })
+        projectReferencesMap = Dictionary(uniqueKeysWithValues: projectReferences.map { ($0.name, $0) })
     }
 
     static func resolveProject(jsonDictionary: JSONDictionary) -> JSONDictionary {
@@ -210,13 +225,14 @@ extension Project {
 extension Project: PathContainer {
 
     static var pathProperties: [PathProperty] {
-        return [
+        [
             .string("configFiles"),
             .string("localPackages"),
             .object("options", SpecOptions.pathProperties),
             .object("targets", Target.pathProperties),
             .object("targetTemplates", Target.pathProperties),
             .object("aggregateTargets", AggregateTarget.pathProperties),
+            .object("projectReferences", ProjectReference.pathProperties),
         ]
     }
 }
@@ -253,13 +269,13 @@ extension Project {
 extension BuildSettingsContainer {
 
     fileprivate var configFilePaths: [Path] {
-        return configFiles.values.map { Path($0) }
+        configFiles.values.map { Path($0) }
     }
 }
 
 extension Project: JSONEncodable {
     public func toJSONValue() -> Any {
-        return toJSONDictionary()
+        toJSONDictionary()
     }
 
     public func toJSONDictionary() -> JSONDictionary {
@@ -267,6 +283,7 @@ extension Project: JSONEncodable {
         let configsPairs = configs.map { ($0.name, $0.type?.rawValue) }
         let aggregateTargetsPairs = aggregateTargets.map { ($0.name, $0.toJSONValue()) }
         let schemesPairs = schemes.map { ($0.name, $0.toJSONValue()) }
+        let projectReferencesPairs = projectReferences.map { ($0.name, $0.toJSONValue()) }
 
         var dictionary: JSONDictionary = [:]
         dictionary["name"] = name
@@ -283,6 +300,7 @@ extension Project: JSONEncodable {
         dictionary["aggregateTargets"] = Dictionary(uniqueKeysWithValues: aggregateTargetsPairs)
         dictionary["schemes"] = Dictionary(uniqueKeysWithValues: schemesPairs)
         dictionary["settingGroups"] = settingGroups.mapValues { $0.toJSONValue() }
+        dictionary["projectReferences"] = projectReferencesPairs
 
         return dictionary
     }

@@ -4,65 +4,34 @@ import ProjectSpec
 import SwiftCLI
 import XcodeGenKit
 import XcodeProj
+import Version
 
-class GenerateCommand: Command {
+class GenerateCommand: ProjectCommand {
 
-    let name: String = "generate"
-    let shortDescription: String = "Generate an Xcode project from a spec"
+    @Flag("-q", "--quiet", description: "Suppress all informational and success output")
+    var quiet: Bool
 
-    let quiet = Flag(
-        "-q",
-        "--quiet",
-        description: "Suppress all informational and success output",
-        defaultValue: false
-    )
+    @Flag("-c", "--use-cache", description: "Use a cache for the xcodegen spec. This will prevent unnecessarily generating the project if nothing has changed")
+    var useCache: Bool
 
-    let useCache = Flag(
-        "-c",
-        "--use-cache",
-        description: "Use a cache for the xcodegen spec. This will prevent unnecessarily generating the project if nothing has changed",
-        defaultValue: false
-    )
+    @Key("--cache-path", description: "Where the cache file will be loaded from and save to. Defaults to ~/.xcodegen/cache/{SPEC_PATH_HASH}")
+    var cacheFilePath: Path?
 
-    let cacheFilePath = Key<Path>(
-        "--cache-path",
-        description: "Where the cache file will be loaded from and save to. Defaults to ~/.xcodegen/cache/{SPEC_PATH_HASH}"
-    )
+    @Key("-p", "--project", description: "The path to the directory where the project should be generated. Defaults to the directory the spec is in. The filename is defined in the project spec")
+    var projectDirectory: Path?
 
-    let spec = Key<Path>(
-        "-s",
-        "--spec",
-        description: "The path to the project spec file. Defaults to project.yml"
-    )
-
-    let projectDirectory = Key<Path>("-p", "--project", description: "The path to the directory where the project should be generated. Defaults to the directory the spec is in. The filename is defined in the project spec")
-
-    let version: Version
+    @Flag("--only-plists", description: "Generate only plist files")
+    var onlyPlists: Bool
 
     init(version: Version) {
-        self.version = version
+        super.init(version: version,
+                   name: "generate",
+                   shortDescription: "Generate an Xcode project from a spec")
     }
 
-    func execute() throws {
+    override func execute(specLoader: SpecLoader, projectSpecPath: Path, project: Project) throws {
 
-        let projectSpecPath = (spec.value ?? "project.yml").absolute()
-
-        let projectDirectory = self.projectDirectory.value?.absolute() ?? projectSpecPath.parent()
-
-        if !projectSpecPath.exists {
-            throw GenerationError.missingProjectSpec(projectSpecPath)
-        }
-
-        let specLoader = SpecLoader(version: version)
-        let project: Project
-
-        // load project spec
-        do {
-            project = try specLoader.loadProject(path: projectSpecPath, variables: ProcessInfo.processInfo.environment)
-            info("Loaded project:\n  \(project.debugDescription.replacingOccurrences(of: "\n", with: "\n  "))")
-        } catch {
-            throw GenerationError.projectSpecParsingError(error)
-        }
+        let projectDirectory = self.projectDirectory?.absolute() ?? projectSpecPath.parent()
 
         // validate project dictionary
         do {
@@ -73,12 +42,12 @@ class GenerateCommand: Command {
 
         let projectPath = projectDirectory + "\(project.name).xcodeproj"
 
-        let cacheFilePath = self.cacheFilePath.value ??
+        let cacheFilePath = self.cacheFilePath ??
             Path("~/.xcodegen/cache/\(projectSpecPath.absolute().string.md5)").absolute()
         var cacheFile: CacheFile?
 
         // read cache
-        if useCache.value || self.cacheFilePath.value != nil {
+        if useCache || self.cacheFilePath != nil {
             do {
                 cacheFile = try specLoader.generateCacheFile()
             } catch {
@@ -111,11 +80,19 @@ class GenerateCommand: Command {
             throw GenerationError.validationError(error)
         }
 
+        // run pre gen command
+        if let command = project.options.preGenCommand {
+            try Task.run(bash: command, directory: projectDirectory.absolute().string)
+        }
+
         // generate plists
         info("⚙️  Generating plists...")
         let fileWriter = FileWriter(project: project)
         do {
             try fileWriter.writePlists()
+            if onlyPlists {
+                return
+            }
         } catch {
             throw GenerationError.writingError(error)
         }
@@ -125,7 +102,7 @@ class GenerateCommand: Command {
         let xcodeProject: XcodeProj
         do {
             let projectGenerator = ProjectGenerator(project: project)
-            xcodeProject = try projectGenerator.generateXcodeProject()
+            xcodeProject = try projectGenerator.generateXcodeProject(in: projectDirectory)
         } catch {
             throw GenerationError.generationError(error)
         }
@@ -148,22 +125,27 @@ class GenerateCommand: Command {
                 info("Failed to write cache: \(error.localizedDescription)")
             }
         }
+
+        // run post gen command
+        if let command = project.options.postGenCommand {
+            try Task.run(bash: command, directory: projectDirectory.absolute().string)
+        }
     }
 
     func info(_ string: String) {
-        if !quiet.value {
+        if !quiet {
             stdout.print(string)
         }
     }
 
     func warning(_ string: String) {
-        if !quiet.value {
+        if !quiet {
             stdout.print(string.yellow)
         }
     }
 
     func success(_ string: String) {
-        if !quiet.value {
+        if !quiet {
             stdout.print(string.green)
         }
     }

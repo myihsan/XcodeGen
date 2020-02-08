@@ -9,10 +9,15 @@ options:
   deploymentTarget:
     watchOS: 4.0
   groupSortPosition: top
+  preGenCommand: echo "This is a pre-gen command"
+  postGenCommand: scripts/script.sh
 fileGroups:
   - Configs
   - FileGroup
   - SomeFile
+projectReferences:
+  AnotherProject:
+    path: ./AnotherProject/AnotherProject.xcodeproj
 configFiles:
   Test Debug: Configs/config.xcconfig
 breakpoints:
@@ -106,14 +111,25 @@ targets:
       - path: Folder
         type: folder
         buildPhase: none
+        group: CustomGroup
       - path: Mintfile
         type: file
         buildPhase: none
+        group: CustomGroup
+      - path: Group/File1.swift
+        group: CustomGroup
+      - path: Group2/File2.swift
+        group: CustomGroup
       - path: CopyFiles
         buildPhase:
           copyFiles:
             destination: productsDirectory
             subpath: include/$(PRODUCT_NAME)
+      - path: Resources/example.mp4
+        buildPhase: resources
+        resourceTags:
+          - tag1
+          - tag2
     settings:
       INFOPLIST_FILE: App_iOS/Info.plist
       PRODUCT_BUNDLE_IDENTIFIER: com.project.app
@@ -126,6 +142,8 @@ targets:
       - target: App_watchOS
       - target: iMessageApp
       - sdk: Contacts.framework
+      - bundle: BundleX.bundle
+      - target: AnotherProject/ExternalTarget
     scheme:
       testTargets:
         - App_iOS_Tests
@@ -262,6 +280,13 @@ targets:
     sources: App_iOS_UITests
     dependencies:
       - target: App_iOS
+      
+  App_macOS_Tests:
+    type: bundle.unit-test
+    platform: macOS
+    sources: App_macOS_Tests
+    dependencies:
+      - target: App_macOS
 
   XPC Service:
     type: xpc-service
@@ -296,7 +321,11 @@ schemes:
   App_Scheme:
     build:
       targets:
-        App_iOS: all
+        App_iOS: all    
+    run:
+      simulateLocation:
+        allow: true
+        defaultLocation: Honolulu, HI, USA
     test:
       gatherCoverageData: true
       targets:

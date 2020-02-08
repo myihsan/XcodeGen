@@ -33,12 +33,20 @@ public struct Dependency: Equatable {
         self.weakLink = weakLink
     }
 
+    public enum CarthageLinkType: String {
+        case dynamic
+        case `static`
+
+        public static let `default` = dynamic
+    }
+
     public enum DependencyType: Equatable {
         case target
         case framework
-        case carthage(findFrameworks: Bool?)
+        case carthage(findFrameworks: Bool?, linkType: CarthageLinkType)
         case sdk(root: String?)
         case package(product: String?)
+        case bundle
     }
 }
 
@@ -59,7 +67,8 @@ extension Dependency: JSONObjectConvertible {
             reference = framework
         } else if let carthage: String = jsonDictionary.json(atKeyPath: "carthage") {
             let findFrameworks: Bool? = jsonDictionary.json(atKeyPath: "findFrameworks")
-            type = .carthage(findFrameworks: findFrameworks)
+            let carthageLinkType: CarthageLinkType = (jsonDictionary.json(atKeyPath: "linkType") as String?).flatMap(CarthageLinkType.init(rawValue:)) ?? .default
+            type = .carthage(findFrameworks: findFrameworks, linkType: carthageLinkType)
             reference = carthage
         } else if let sdk: String = jsonDictionary.json(atKeyPath: "sdk") {
             let sdkRoot: String? = jsonDictionary.json(atKeyPath: "root")
@@ -69,6 +78,9 @@ extension Dependency: JSONObjectConvertible {
             let product: String? = jsonDictionary.json(atKeyPath: "product")
             type = .package(product: product)
             reference = package
+        } else if let bundle: String = jsonDictionary.json(atKeyPath: "bundle") {
+            type = .bundle
+            reference = bundle
         } else {
             throw SpecParsingError.invalidDependency(jsonDictionary)
         }
@@ -112,15 +124,18 @@ extension Dependency: JSONEncodable {
             dict["target"] = reference
         case .framework:
             dict["framework"] = reference
-        case .carthage(let findFrameworks):
+        case .carthage(let findFrameworks, let linkType):
             dict["carthage"] = reference
             if let findFrameworks = findFrameworks {
                 dict["findFrameworks"] = findFrameworks
             }
+            dict["linkType"] = linkType.rawValue
         case .sdk:
             dict["sdk"] = reference
         case .package:
             dict["package"] = reference
+        case .bundle:
+            dict["bundle"] = reference
         }
 
         return dict
@@ -130,7 +145,7 @@ extension Dependency: JSONEncodable {
 extension Dependency: PathContainer {
 
     static var pathProperties: [PathProperty] {
-        return [
+        [
             .string("framework"),
         ]
     }
