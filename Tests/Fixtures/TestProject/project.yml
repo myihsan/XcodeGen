@@ -22,7 +22,7 @@ configFiles:
   Test Debug: Configs/config.xcconfig
 breakpoints:
   - type: File
-    filePath: App_iOS/AppDelegate.swift
+    path: App_iOS/AppDelegate.swift
     line: 7
     condition: launchOptions == nil
     actions:
