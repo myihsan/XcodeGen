@@ -58,15 +58,12 @@ public struct Breakpoint: Equatable {
         case graphicsTrace
         case appleScript(String?)
         case sound(name: SoundName)
-        case openGLError
     }
 
     public var type: BreakpointType
     public var enabled: Bool
     public var ignoreCount: Int
     public var continueAfterRunningActions: Bool
-    public var timestamp: String?
-    public var breakpointStackSelectionBehavior: String?
     public var condition: String?
     public var actions: [Breakpoint.Action]
 
@@ -84,8 +81,6 @@ public struct Breakpoint: Equatable {
         self.enabled = enabled
         self.ignoreCount = ignoreCount
         self.continueAfterRunningActions = continueAfterRunningActions
-        self.timestamp = timestamp
-        self.breakpointStackSelectionBehavior = breakpointStackSelectionBehavior
         self.condition = condition
         self.actions = actions
     }
@@ -187,7 +182,7 @@ extension Breakpoint.Action: JSONObjectConvertible {
             }
             self = .sound(name: name)
         case .openGLError:
-            self = .openGLError
+            throw SpecParsingError.unknownBreakpointActionType(idString)
         }
     }
 }
@@ -234,8 +229,6 @@ extension Breakpoint: JSONObjectConvertible {
         enabled = jsonDictionary.json(atKeyPath: "enabled") ?? true
         ignoreCount = jsonDictionary.json(atKeyPath: "ignoreCount") ?? 0
         continueAfterRunningActions = jsonDictionary.json(atKeyPath: "continueAfterRunningActions") ?? false
-        timestamp = jsonDictionary.json(atKeyPath: "timestamp")
-        breakpointStackSelectionBehavior = jsonDictionary.json(atKeyPath: "breakpointStackSelectionBehavior")
         condition = jsonDictionary.json(atKeyPath: "condition")
         if jsonDictionary["actions"] != nil {
             actions = try jsonDictionary.json(atKeyPath: "actions", invalidItemBehaviour: .fail)

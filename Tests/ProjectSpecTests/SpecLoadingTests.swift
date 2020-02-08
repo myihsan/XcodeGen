@@ -377,25 +377,25 @@ class SpecLoadingTests: XCTestCase {
 
             $0.it("parses breakpoints") {
                 let breakpointDictionaries = [
-                    ["type": "File", "path": "Foo.swift", "line": 7, "condition": "bar == nil", "timestamp": "600577513.4932801"],
+                    ["type": "File", "path": "Foo.swift", "line": 7, "condition": "bar == nil"],
                     ["type": "Exception", "scope": "All", "stopOnStyle": "Catch"],
                     ["type": "SwiftError", "enabled": false],
                     ["type": "OpenGLError", "ignoreCount": 2],
                     ["type": "Symbolic", "symbol": "UIViewAlertForUnsatisfiableConstraints", "module": "UIKitCore"],
                     ["type": "IDEConstraintError", "continueAfterRunningActions": true],
-                    ["type": "IDETestFailure", "breakpointStackSelectionBehavior": "1"]
+                    ["type": "IDETestFailure"]
                 ]
 
                 let project = try getProjectSpec(["breakpoints": breakpointDictionaries])
 
                 let expectedBreakpoints = [
-                    Breakpoint(type: .file(path: "Foo.swift", line: 7), timestamp: "600577513.4932801", condition: "bar == nil"),
+                    Breakpoint(type: .file(path: "Foo.swift", line: 7), condition: "bar == nil"),
                     Breakpoint(type: .exception(scope: .all, stopOnStyle: .catch)),
                     Breakpoint(type: .swiftError, enabled: false),
                     Breakpoint(type: .openGLError, ignoreCount: 2),
                     Breakpoint(type: .symbolic(symbol: "UIViewAlertForUnsatisfiableConstraints", module: "UIKitCore")),
                     Breakpoint(type: .ideConstraintError, continueAfterRunningActions: true),
-                    Breakpoint(type: .ideTestFailure, breakpointStackSelectionBehavior: "1")
+                    Breakpoint(type: .ideTestFailure)
                 ]
 
                 try expect(project.breakpoints) == expectedBreakpoints
@@ -409,8 +409,7 @@ class SpecLoadingTests: XCTestCase {
                     ["type": "ShellCommand", "path": "script.sh", "arguments": "argument1, argument2", "waitUntilDone": true],
                     ["type": "GraphicsTrace"],
                     ["type": "AppleScript", "script": #"display alert "Hello!""#],
-                    ["type": "Sound", "name": "Hero"],
-                    ["type": "OpenGLError"]
+                    ["type": "Sound", "name": "Hero"]
                 ]
 
                 let breakpoint = try Breakpoint(jsonDictionary: breakpointDicationary)
@@ -421,8 +420,7 @@ class SpecLoadingTests: XCTestCase {
                     .shellCommand(path: "script.sh", arguments: "argument1, argument2", waitUntilDone: true),
                     .graphicsTrace,
                     .appleScript(#"display alert "Hello!""#),
-                    .sound(name: .hero),
-                    .openGLError
+                    .sound(name: .hero)
                 ]
 
                 try expect(breakpoint.actions) == expectedActions
