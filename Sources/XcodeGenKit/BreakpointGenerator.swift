@@ -68,16 +68,49 @@ public class BreakpointGenerator {
     }
 
     private func generateBreakpointActionProxy(_ breakpointAction: Breakpoint.Action) throws -> XCBreakpointList.BreakpointProxy.BreakpointContent.BreakpointActionProxy {
-        let xcaction = XCBreakpointList.BreakpointProxy.BreakpointContent.BreakpointActionProxy.ActionContent(consoleCommand: breakpointAction.consoleCommand,
-                                                                                                                        message: breakpointAction.message,
-                                                                                                                        conveyanceType: breakpointAction.conveyanceType?.rawValue,
-                                                                                                                        command: breakpointAction.command,
-                                                                                                                        arguments: breakpointAction.arguments,
-                                                                                                                        waitUntilDone: breakpointAction.waitUntilDone,
-                                                                                                                        script: breakpointAction.script,
-                                                                                                                        soundName: breakpointAction.soundName?.rawValue)
+        let actionExtensionID: BreakpointActionExtensionID
+        var consoleCommand: String?
+        var message: String?
+        var conveyanceType: String?
+        var command: String?
+        var arguments: String?
+        var waitUntilDone: Bool?
+        var script: String?
+        var soundName: String?
+        switch breakpointAction {
+        case let .debuggerCommand(command):
+            actionExtensionID = .debuggerCommand
+            consoleCommand = command
+        case let .log(log):
+            actionExtensionID = .log
+            message = log.message
+            conveyanceType = log.conveyanceType.rawValue
+        case let .shellCommand(shellCommand):
+            actionExtensionID = .shellCommand
+            command = shellCommand.path
+            arguments = shellCommand.arguments
+            waitUntilDone = shellCommand.waitUntilDone
+        case .graphicsTrace:
+            actionExtensionID = .graphicsTrace
+        case let .appleScript(appleScript):
+            actionExtensionID = .appleScript
+            script = appleScript
+        case let .sound(name):
+            actionExtensionID = .sound
+            soundName = name.rawValue
+        case .openGLError:
+            actionExtensionID = .openGLError
+        }
+        let xcaction = XCBreakpointList.BreakpointProxy.BreakpointContent.BreakpointActionProxy.ActionContent(consoleCommand: consoleCommand,
+                                                                                                              message: message,
+                                                                                                              conveyanceType: conveyanceType,
+                                                                                                              command: command,
+                                                                                                              arguments: arguments,
+                                                                                                              waitUntilDone: waitUntilDone,
+                                                                                                              script: script,
+                                                                                                              soundName: soundName)
 
-        return XCBreakpointList.BreakpointProxy.BreakpointContent.BreakpointActionProxy(actionExtensionID:  breakpointAction.type,
+        return XCBreakpointList.BreakpointProxy.BreakpointContent.BreakpointActionProxy(actionExtensionID:  actionExtensionID,
                                                                                         actionContent: xcaction)
     }
 }
