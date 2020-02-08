@@ -68,7 +68,7 @@ extension XCScheme.CommandLineArguments {
 extension BreakpointType {
 
     init?(string: String) {
-        if let type = BreakpointType(rawValue: "Xcode.Breakpoint.\(string)") {
+        if let type = BreakpointType(rawValue: "Xcode.Breakpoint.\(string)Breakpoint") {
             self = type
         } else if let type = BreakpointType(rawValue: string) {
             self = type
